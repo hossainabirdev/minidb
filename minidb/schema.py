@@ -42,6 +42,10 @@ class Column:
     primary_key: bool = False
     not_null: bool = False
     unique: bool = False
+    # DEFAULT value (v2, from ALTER TABLE ADD COLUMN ... DEFAULT x).
+    # has_default is True only when a DEFAULT was written.
+    default: object = None
+    has_default: bool = False
 
     def __post_init__(self) -> None:
         # Normalise the type so "integer", "INTEGER" and "Integer"
@@ -66,6 +70,8 @@ class Column:
             "primary_key": self.primary_key,
             "not_null": self.not_null,
             "unique": self.unique,
+            "default": self.default,
+            "has_default": self.has_default,
         }
 
     @classmethod
@@ -77,6 +83,8 @@ class Column:
             primary_key=bool(data.get("primary_key", False)),
             not_null=bool(data.get("not_null", False)),
             unique=bool(data.get("unique", False)),
+            default=data.get("default"),
+            has_default=bool(data.get("has_default", False)),
         )
 
 

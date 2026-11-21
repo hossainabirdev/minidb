@@ -17,15 +17,13 @@ No regular-expression-only hack is used here: the grammar is
 real, so "WHERE (a = 1 OR b = 2) AND c = 3" parses with the
 parentheses in the right place.
 
-SQL supported in v1 (see README for the full list):
+SQL supported in v2 (see README for the full list):
     CREATE TABLE, DROP TABLE, CREATE INDEX, DROP INDEX,
-    INSERT, SELECT, UPDATE, DELETE
-with WHERE (=, !=, <>, <, >, <=, >=, AND, OR, NOT),
+    INSERT, SELECT, UPDATE, DELETE, ALTER TABLE ADD COLUMN,
+    BEGIN / COMMIT / ROLLBACK (transactions),
+    JOIN (one INNER JOIN), GROUP BY / HAVING, SELECT DISTINCT,
+    WHERE (=, !=, <>, <, >, <=, >=, AND, OR, NOT, BETWEEN),
 ORDER BY, LIMIT, OFFSET, and COUNT(*)/SUM/AVG/MIN/MAX.
-
-Transactions, JOIN and GROUP BY are NOT parsed in v1.  If you
-write them, the parser raises MiniDBError -- that is honest,
-not a silent wrong answer.
 """
 
 from __future__ import annotations
@@ -48,6 +46,9 @@ KEYWORDS = {
     "PRIMARY", "KEY", "NULL", "UNIQUE", "INTEGER", "TEXT", "REAL",
     "BLOB", "ASC", "DESC", "IF", "EXISTS", "COUNT", "SUM", "AVG",
     "MIN", "MAX", "TRUE", "FALSE", "AUTOINCREMENT",
+    "BEGIN", "COMMIT", "ROLLBACK", "TRANSACTION", "JOIN", "INNER",
+    "GROUP", "HAVING", "DISTINCT", "ALTER", "ADD", "COLUMN",
+    "DEFAULT", "USING", "BTREE", "HASH", "BETWEEN",
 }
 
 
@@ -228,6 +229,28 @@ class CreateIndexStmt:
     table: str
     column: str
     unique: bool = False
+    index_type: str = "hash"  # "hash" or "btree"
+
+
+@dataclass
+class BeginStmt:
+    pass
+
+
+@dataclass
+class CommitStmt:
+    pass
+
+
+@dataclass
+class RollbackStmt:
+    pass
+
+
+@dataclass
+class AlterTableStmt:
+    table: str
+    column: dict  # name/type/primary_key/not_null/unique/default/has_default
 
 
 @dataclass
@@ -251,6 +274,11 @@ class SelectStmt:
     order_by: list[tuple[str, str]] = field(default_factory=list)
     limit: int | None = None
     offset: int | None = None
+    distinct: bool = False
+    join_table: str | None = None
+    join_on: object | None = None
+    group_by: list[str] = field(default_factory=list)
+    having: object | None = None
 
 
 @dataclass
@@ -335,6 +363,20 @@ class Parser:
         """Parse one statement.  A trailing ';' is allowed."""
         if self.is_keyword("CREATE"):
             stmt = self._parse_create()
+        elif self.is_keyword("ALTER"):
+            stmt = self._parse_alter()
+        elif self.is_keyword("BEGIN"):
+            self.next()
+            self.match_keyword("TRANSACTION")
+            stmt = BeginStmt()
+        elif self.is_keyword("COMMIT"):
+            self.next()
+            self.match_keyword("TRANSACTION")
+            stmt = CommitStmt()
+        elif self.is_keyword("ROLLBACK"):
+            self.next()
+            self.match_keyword("TRANSACTION")
+            stmt = RollbackStmt()
         elif self.is_keyword("DROP"):
             stmt = self._parse_drop()
         elif self.is_keyword("INSERT"):
@@ -348,9 +390,9 @@ class Parser:
         else:
             raise MiniDBError(
                 f"Unsupported statement starting with {self.peek().text!r}. "
-                "MiniDB v1 supports CREATE/DROP TABLE, CREATE/DROP INDEX, "
-                "INSERT, SELECT, UPDATE, DELETE. "
-                "BEGIN/COMMIT, JOIN and GROUP BY are v2."
+                "MiniDB v2 supports CREATE/DROP TABLE, CREATE/DROP INDEX, "
+                "ALTER TABLE, INSERT, SELECT, UPDATE, DELETE, "
+                "BEGIN/COMMIT/ROLLBACK, JOIN, GROUP BY."
             )
         self.match_symbol(";")
         if self.peek().kind != "EOF":
@@ -458,7 +500,66 @@ class Parser:
         self.expect_symbol("(")
         column = self.expect_ident()
         self.expect_symbol(")")
-        return CreateIndexStmt(name=name, table=table, column=column, unique=unique)
+        index_type = "hash"
+        if self.match_keyword("USING"):
+            tok = self.next()
+            if tok.kind != "KEYWORD" or tok.value not in ("BTREE", "HASH"):
+                raise MiniDBError(
+                    "USING must be followed by BTREE or HASH."
+                )
+            index_type = str(tok.value).lower()
+        return CreateIndexStmt(
+            name=name, table=table, column=column,
+            unique=unique, index_type=index_type,
+        )
+
+    def _parse_alter(self) -> AlterTableStmt:
+        """ALTER TABLE t ADD COLUMN c TYPE [DEFAULT x] [NOT NULL] [UNIQUE]."""
+        self.expect_keyword("ALTER")
+        self.expect_keyword("TABLE")
+        table = self.expect_ident()
+        self.expect_keyword("ADD")
+        self.match_keyword("COLUMN")  # ADD COLUMN or just ADD
+        col_name = self.expect_ident()
+        tok = self.next()
+        if tok.kind != "KEYWORD" or tok.value not in (
+            "INTEGER", "TEXT", "REAL", "BLOB",
+        ):
+            raise MiniDBError(
+                f"Expected a type (INTEGER/TEXT/REAL/BLOB) for column "
+                f"{col_name!r}, got {tok.text!r}."
+            )
+        col: dict = {
+            "name": col_name,
+            "type": str(tok.value),
+            "primary_key": False,
+            "not_null": False,
+            "unique": False,
+            "default": None,
+            "has_default": False,
+        }
+        while True:
+            if self.is_keyword("PRIMARY"):
+                raise MiniDBError(
+                    "Cannot ADD a PRIMARY KEY column to an existing table."
+                )
+            if self.is_keyword("NOT"):
+                self.next()
+                self.expect_keyword("NULL")
+                col["not_null"] = True
+            elif self.is_keyword("UNIQUE"):
+                self.next()
+                col["unique"] = True
+            elif self.is_keyword("DEFAULT"):
+                self.next()
+                value = self._parse_primary()
+                if not isinstance(value, Literal):
+                    raise MiniDBError("DEFAULT needs a literal value.")
+                col["default"] = value.value
+                col["has_default"] = True
+            else:
+                break
+        return AlterTableStmt(table=table, column=col)
 
     def _parse_drop(self) -> object:
         self.expect_keyword("DROP")
@@ -516,6 +617,7 @@ class Parser:
 
     def _parse_select(self) -> SelectStmt:
         self.expect_keyword("SELECT")
+        distinct = self.match_keyword("DISTINCT")
         columns: list[SelectItem] = []
         while True:
             if self.is_symbol("*"):
@@ -536,9 +638,35 @@ class Parser:
             break
         self.expect_keyword("FROM")
         table = self.expect_ident()
+        join_table: str | None = None
+        join_on = None
+        if self.is_keyword("JOIN") or (
+            self.is_keyword("INNER") and self.tokens[self.pos + 1].kind == "KEYWORD"
+            and self.tokens[self.pos + 1].value == "JOIN"
+        ):
+            if self.is_keyword("INNER"):
+                self.next()
+            self.expect_keyword("JOIN")
+            join_table = self.expect_ident()
+            self.expect_keyword("ON")
+            join_on = self._parse_expr()
         where = None
         if self.match_keyword("WHERE"):
             where = self._parse_expr()
+        group_by: list[str] = []
+        having = None
+        if self.match_keyword("GROUP"):
+            self.expect_keyword("BY")
+            while True:
+                name = self.expect_ident()
+                if self.match_symbol("."):
+                    name = name + "." + self.expect_ident()
+                group_by.append(name)
+                if self.match_symbol(","):
+                    continue
+                break
+            if self.match_keyword("HAVING"):
+                having = self._parse_expr()
         order_by: list[tuple[str, str]] = []
         if self.match_keyword("ORDER"):
             self.expect_keyword("BY")
@@ -576,6 +704,8 @@ class Parser:
         return SelectStmt(
             columns=columns, table=table, where=where,
             order_by=order_by, limit=limit, offset=offset,
+            distinct=distinct, join_table=join_table, join_on=join_on,
+            group_by=group_by, having=having,
         )
 
     def _parse_aggregate(self) -> Aggregate:
@@ -648,6 +778,17 @@ class Parser:
 
     def _parse_comparison(self) -> object:
         left = self._parse_primary()
+        # col BETWEEN low AND high  ->  col >= low AND col <= high
+        if self.is_keyword("BETWEEN"):
+            self.next()
+            low = self._parse_primary()
+            self.expect_keyword("AND")
+            high = self._parse_primary()
+            return BinaryOp(
+                op="AND",
+                left=BinaryOp(op=">=", left=left, right=low),
+                right=BinaryOp(op="<=", left=left, right=high),
+            )
         # IS NULL / IS NOT NULL
         if self.is_keyword("IS"):
             self.next()
@@ -668,6 +809,10 @@ class Parser:
 
     def _parse_primary(self) -> object:
         tok = self.peek()
+        if tok.kind == "KEYWORD" and str(tok.value) in (
+            "COUNT", "SUM", "AVG", "MIN", "MAX",
+        ):
+            return self._parse_aggregate()
         if self.is_symbol("("):
             self.next()
             expr = self._parse_expr()

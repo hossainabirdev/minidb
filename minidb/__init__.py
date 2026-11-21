@@ -17,9 +17,10 @@ learn how each file works, in Bengali.
 """
 
 from .api import Collection, Database, TableHandle
+from .btree import BTreeIndex
 from .executor import Engine, Result
 from .parser import MiniDBError
 
-__all__ = ["Database", "TableHandle", "Collection", "Engine", "Result", "MiniDBError"]
-__version__ = "1.1.0"
+__all__ = ["Database", "TableHandle", "Collection", "Engine", "Result", "MiniDBError", "BTreeIndex"]
+__version__ = "2.0.0"
 __author__ = "Abir Hossain"

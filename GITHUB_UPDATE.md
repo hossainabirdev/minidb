@@ -7,7 +7,7 @@ file itself is fine to keep in the repo.
 
 ## 1. Create the repo on GitHub
 
-- Repository name: `mini-db`
+- Repository name: `minidb`
 - Visibility: Public
 - Description (paste exactly this one line):
 
@@ -31,17 +31,17 @@ python, database, sqlite-clone, embedded-database, wal, b-tree, sql, from-scratc
 - [ ] Website left blank (no live site — Python engine, not a website)
 - [ ] Topics added (10, see above)
 - [ ] License shows MIT
-- [ ] "Releases" — after the first push, create a release `v1.1.0`
-      from the `CHANGELOG.md` v1.1.0 entry (optional, but nice)
+- [ ] "Releases" — after the first push, create a release `v2.0.0`
+      from the `CHANGELOG.md` v2.0.0 entry (optional, but nice)
 
 ## 4. First push (run in the extracted project folder)
 
 ```bash
 git init
 git add -A
-git commit -m "MiniDB v1.1.0 — tiny database engine built from scratch in Python"
+git commit -m "MiniDB v2.0.0 — transactions, B-tree, JOIN, GROUP BY, Studio viewer"
 git branch -M main
-git remote add origin https://github.com/hossainabirdev/mini-db.git
+git remote add origin https://github.com/hossainabirdev/minidb.git
 git push -u origin main
 ```
 
@@ -52,4 +52,4 @@ Notes:
 - `data/` is ignored by `.gitignore` — your local database files
   are never pushed to GitHub. Only the code goes up.
 - Do not run `git push` until you have tested the code locally
-  (`python -m unittest discover -s tests` → 50/50 pass).
+  (`python -m unittest discover -s tests` → 88/88 pass).

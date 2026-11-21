@@ -90,6 +90,7 @@ class HashIndex:
             "table": self.table,
             "column": self.column,
             "unique": self.unique,
+            "kind": "hash",
         }
 
     @classmethod

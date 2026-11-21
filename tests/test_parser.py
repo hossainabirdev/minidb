@@ -91,13 +91,17 @@ class TestParser(unittest.TestCase):
 
         self.assertIsInstance(stmt.rows[0][0], UnaryOp)
 
-    def test_unsupported_join_raises(self):
-        with self.assertRaises(MiniDBError):
-            parse("SELECT * FROM a JOIN b ON a.id = b.id")
+    def test_join_parses_in_v2(self):
+        # v2: JOIN is supported (v1 raised here).
+        stmt = parse("SELECT * FROM a JOIN b ON a.id = b.id")
+        self.assertEqual(stmt.join_table, "b")
+        self.assertIsNotNone(stmt.join_on)
 
-    def test_unsupported_begin_raises(self):
-        with self.assertRaises(MiniDBError):
-            parse("BEGIN")
+    def test_begin_parses_in_v2(self):
+        # v2: BEGIN is a transaction statement (v1 raised here).
+        from minidb.parser import BeginStmt
+
+        self.assertIsInstance(parse("BEGIN"), BeginStmt)
 
     def test_empty_raises(self):
         with self.assertRaises(MiniDBError):

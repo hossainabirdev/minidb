@@ -3,6 +3,59 @@
 All notable changes to MiniDB are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.0.0] — 2026-11-21
+
+The next version, all at once: the remaining v1 features, built
+for real and tested.
+
+### Added
+
+- Transactions — `BEGIN` / `COMMIT` / `ROLLBACK` (also `BEGIN
+  TRANSACTION`), real via the WAL: uncommitted writes are kept
+  in a pending list and only reach the file on `COMMIT`;
+  `ROLLBACK` (or a crash before `COMMIT`) restores a snapshot
+  taken at `BEGIN`. Tests include a crash test for both cases.
+- B-tree index (`minidb/btree.py`) — `CREATE INDEX ... USING
+  BTREE` for range queries (`>`, `<`, `>=`, `<=`, `BETWEEN`) and
+  `ORDER BY` without a sort. The hash index is kept for `=`
+  lookups.
+- `JOIN` — one `INNER JOIN ... ON a.col = b.col`, nested loops,
+  qualified column names (`users.name`, `orders.total`) in
+  `SELECT *`.
+- `GROUP BY` / `HAVING` and `SELECT DISTINCT` with `COUNT` /
+  `SUM` / `AVG` / `MIN` / `MAX`.
+- `ALTER TABLE ... ADD COLUMN ... [DEFAULT value] [NOT NULL]
+  [UNIQUE]`, persisted for old rows (DEFAULT or NULL) and new
+  rows (DEFAULT when omitted).
+- MiniDB Studio (`minidb/studio.py`) — a small read-only web
+  viewer on http://127.0.0.1:8766: lists tables, shows rows,
+  runs a `SELECT` typed in a box. Only `SELECT` is allowed.
+- TCP server (`minidb/server.py`, now real, not a placeholder)
+  — one SQL line in, one JSON object out; one client at a time,
+  no auth, no TLS, localhost only. Small client in
+  `examples/tcp_client.py`.
+- `examples/demo_v2.py` — transactions, JOIN, GROUP BY, B-tree
+  range, `ALTER TABLE`, all with real output from the file.
+- Tests: 88 in total (50 from v1 + 38 new) — `test_transactions`,
+  `test_btree`, `test_join_group`, `test_alter`,
+  `test_studio_tcp`.
+
+### Changed
+
+- Version bumped to 2.0.0 in `minidb/__init__.py` and
+  `pyproject.toml`; REPL banner now reads
+  `MiniDB 2.0.0 — built by Abir Hossain`.
+- README rewritten for internship / job / scholarship reviewers:
+  one What's new section, full How to use (install, demo, REPL,
+  Python API, Studio, TCP server, tests), honest limits.
+- `BANGLA_GUIDE.md` updated to v2 in simple Bengali.
+
+### Fixed
+
+- README Tests badge pointed to `hossainabirdev/mini-db` —
+  now points to the real repo `hossainabirdev/minidb`
+  (also fixed in `pyproject.toml` URLs and `GITHUB_UPDATE.md`).
+
 ## [1.1.0] — 2026-11-21
 
 No engine change. This release makes v1.0.0 ready for GitHub.

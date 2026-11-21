@@ -183,6 +183,20 @@ class Database:
         """Run several statements separated by ';'."""
         return self.engine.execute_many(sql_script)
 
+    # -- transactions (v2) ----------------------------------------------
+
+    def begin(self) -> Result:
+        """BEGIN a transaction (see also COMMIT / ROLLBACK)."""
+        return self.engine.execute("BEGIN")
+
+    def commit(self) -> Result:
+        """COMMIT the open transaction."""
+        return self.engine.execute("COMMIT")
+
+    def rollback(self) -> Result:
+        """ROLLBACK the open transaction."""
+        return self.engine.execute("ROLLBACK")
+
     # -- helpers ------------------------------------------------------
 
     def table(self, name: str) -> TableHandle:
