@@ -1,0 +1,15 @@
+# MiniDB data files -- code goes to GitHub, data stays on your computer.
+data/*.minidb
+data/*.minidb-wal
+data/*.minidb.tmp
+*.minidb
+*.minidb-wal
+*.minidb.tmp
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
