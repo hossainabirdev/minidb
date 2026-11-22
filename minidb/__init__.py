@@ -22,5 +22,5 @@ from .executor import Engine, Result
 from .parser import MiniDBError
 
 __all__ = ["Database", "TableHandle", "Collection", "Engine", "Result", "MiniDBError", "BTreeIndex"]
-__version__ = "2.0.0"
+__version__ = "2.0.1"
 __author__ = "Abir Hossain"

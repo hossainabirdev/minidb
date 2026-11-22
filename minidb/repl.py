@@ -97,7 +97,7 @@ def run_repl(db_path: str = "data/mydata.minidb", stdin=None, stdout=None) -> No
         print(text, file=out)
 
     db = Database(db_path)
-    say("MiniDB 2.0.0 — built by Abir Hossain -- type .help for help, .exit to quit.")
+    say("MiniDB 2.0.1 — built by Abir Hossain -- type .help for help, .exit to quit.")
     buffer = ""
     try:
         while True:

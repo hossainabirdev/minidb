@@ -3,6 +3,22 @@
 All notable changes to MiniDB are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.0.1] — 2026-11-22
+
+Docs and cleanup only. No engine change.
+
+### Fixed
+
+- Removed the odd identity clause from the `README.md` Built-by
+  line — it read oddly.
+- Python version aligned to 3.11+ everywhere user-facing: the
+  README badge now reads Python 3.11+ (was 3.12), and
+  `requirements.txt` now says Python 3.11+ (was 3.10+).
+- Removed the repo-root helper file for push instructions; push
+  instructions now live in chat, not in the repo.
+- Added a short Bengali note in `BANGLA_GUIDE.md` explaining why
+  the WAL is written before the data is applied.
+
 ## [2.0.0] — 2026-11-21
 
 The next version, all at once: the remaining v1 features, built
@@ -54,7 +70,7 @@ for real and tested.
 
 - README Tests badge pointed to `hossainabirdev/mini-db` —
   now points to the real repo `hossainabirdev/minidb`
-  (also fixed in `pyproject.toml` URLs and `GITHUB_UPDATE.md`).
+  (also fixed in `pyproject.toml` URLs).
 
 ## [1.1.0] — 2026-11-21
 
@@ -70,8 +86,7 @@ No engine change. This release makes v1.0.0 ready for GitHub.
   Python >= 3.11, no dependencies.
 - `.github/workflows/tests.yml` — GitHub Actions runs the test suite
   on Python 3.11 and 3.12 on every push and pull request.
-- `CHANGELOG.md` (this file) and `GITHUB_UPDATE.md` (paste-ready
-  repo description, topics, and first-push commands).
+- `CHANGELOG.md` (this file).
 
 ### Changed
 

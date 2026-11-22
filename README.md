@@ -1,13 +1,13 @@
 # MiniDB
 
-[![Python 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python.org/)
 [![Stdlib only](https://img.shields.io/badge/stdlib-only-green.svg)](https://docs.python.org/3/library/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Tests](https://github.com/hossainabirdev/minidb/actions/workflows/tests.yml/badge.svg)](https://github.com/hossainabirdev/minidb/actions/workflows/tests.yml)
 
 **A tiny database engine built from scratch in Python — no SQLite, no ORM, no libraries.**
 
-Built by **Abir Hossain** (BSc CSE, Uttara University, Dhaka) — GitHub: [hossainabirdev](https://github.com/hossainabirdev) — primary identity: Software Engineering.
+Built by **Abir Hossain** (BSc CSE, Uttara University, Dhaka) — GitHub: [hossainabirdev](https://github.com/hossainabirdev).
 
 ## What MiniDB is
 
@@ -27,8 +27,9 @@ Using SQLite would teach you SQLite's API. Building MiniDB teaches you what a da
 - how a hand-written parser turns `SELECT ... WHERE ...` into a tree,
 - how an executor walks that tree row by row, and how a transaction buffers its writes.
 
-## What is new in v2.0.0
+## What is new in v2.0.1
 
+- v2.0.1 cleanup — README Built-by line tidied, Python 3.11+ everywhere, repo-root helper file removed.
 - Transactions — `BEGIN` / `COMMIT` / `ROLLBACK`, real via the WAL: uncommitted writes never reach the file.
 - B-tree index — `CREATE INDEX ... USING BTREE` for range queries (`>`, `<`, `BETWEEN`) and `ORDER BY` without a sort.
 - JOIN — one `INNER JOIN` on two tables with `ON` equality.
