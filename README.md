@@ -74,7 +74,7 @@ api.py           Database / TableHandle / Collection (LiteDB-style)
 | `minidb/studio.py` | Read-only web viewer (SELECT only) |
 | `minidb/server.py` | TCP server, one SQL line in, one JSON object out |
 
-## SQL supported in v2
+## SQL supported in v2.
 
 **Tables and schema**
 
